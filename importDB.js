@@ -1,5 +1,7 @@
 const fs = require('fs');
-const models = require('./models');
+const sequelize  = require('./models');
+
+const models = sequelize.models;
 
 // Read and parse the dump file
 const dumpFilePath = 'dump.txt';
@@ -12,28 +14,38 @@ const lines = dumpFileContent.split('\n');
 lines.shift();
 
 let currentObject = null;
+let currentEmployeeId = null;
+let currentDepartmentId = null;
 let currentType = null;
-let i = 0;
 
 // Helper function to insert data into the database
 async function insertData(inserted) {
 
     const table = inserted.type;
     const data = inserted.data;
-    i += 1;
 
-    console.log(table, data)
+    if (table == 'Employee' && currentDepartmentId) {
+        data.DepartmentId = currentDepartmentId
+    }
+
+    if (table == 'Salary' || table == 'Donation' && currentEmployeeId) {
+        data.EmployeeId = currentEmployeeId
+    }
+
+    try {
+        await models[table].create(data)
+    } catch (e) {}
 
     return
-
-    await models[table].create(data)
 }
 
 async function fillData() {
     // Loop through each line
-    for (const line of lines) {
+    for (let i = 0; i < lines.length; i++) {
 
-        const indentLevel = Math.floor((line.length - line.trimLeft().length) / 2);
+        const line = lines[i]
+
+        const indentLevel = Math.floor((line.length - line.trimStart().length) / 2);
 
         // Remove indentation and split the line into [key, value]
         let [key, value] = line.trim().split(': ').map(part => part.trim());
@@ -46,8 +58,23 @@ async function fillData() {
             } else {
                 key = currentType
             }
+            if (currentType == 'Department') {
+                let [key, value] = lines[i + 1].trim().split(': ').map(part => part.trim());
+                if (key == 'id' && value) {
+                    currentDepartmentId = value
+                } else {
+                    currentDepartmentId = null
+                }
+            }
         } else if (key && value) {
             currentData = { [key]: value };
+            if (currentType == 'Employee' && key == 'id') {
+                currentEmployeeId = value
+            }
+            if (currentType == 'Donation' && key == 'amount') {
+                let [amount, sign] = value.split(' ')
+                currentData = { amount, sign };
+            }
         }
 
 

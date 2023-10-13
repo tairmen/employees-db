@@ -60,8 +60,11 @@ const Donation = sequelize.define('Donation', {
         allowNull: false,
     },
     amount: {
-        type: DataTypes.STRING,
+        type: DataTypes.FLOAT,
         allowNull: false,
+    },
+    sign: {
+        type: DataTypes.STRING,
     },
 });
 
@@ -82,8 +85,7 @@ const Rate = sequelize.define('Rate', {
 });
 
 // Define associations
-Employee.hasOne(Department);
-Department.belongsTo(Employee);
+Employee.belongsTo(Department);
 
 Employee.hasMany(Salary);
 Salary.belongsTo(Employee);
@@ -94,4 +96,4 @@ Donation.belongsTo(Employee);
 // Sync the models with the database
 sequelize.sync();
 
-module.exports = { Employee, Department, Salary, Donation, Rate };
+module.exports = sequelize;
