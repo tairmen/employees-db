@@ -1,9 +1,9 @@
 # employees-db
 
-run import DB
+run import DB - 
 node importDB.js
 
-run server
+run server - 
 node api.js
 
 GET /calculate - to get rewards
